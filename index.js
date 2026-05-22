@@ -93,8 +93,54 @@ app.post("/jwt", async (req, res) => {
 
 });
 
+// =====================
+// VERIFY TOKEN
+// =====================
+
+const verifyToken = (req, res, next) => {
+
+    const token = req.cookies.token;
+
+    if (!token) {
+
+        return res.status(401).send({
+
+            message: "Unauthorized access",
+
+        });
+
+    }
+
+    jwt.verify(
+
+        token,
+
+        process.env.JWT_SECRET,
+
+        (err, decoded) => {
+
+            if (err) {
+
+                return res.status(401).send({
+
+                    message: "Unauthorized access",
+
+                });
+
+            }
+
+            req.decoded = decoded;
+
+            next();
+
+        }
+
+    );
+
+};
+
 // GET ALL BOOKINGS
-app.get("/api/bookings", async (req, res) => {
+app.get("/api/bookings", verifyToken, async (req, res) => {
   try {
     const data = await Booking.find();
     res.send(data);
