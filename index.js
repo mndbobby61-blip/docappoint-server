@@ -12,13 +12,16 @@ const PORT = process.env.PORT || 8080;
 // =====================
 // MIDDLEWARES
 // =====================
-const express = require("express");
-const cors = require("cors");
-const mongoose = require("mongoose");
-const jwt = require("jsonwebtoken");
-const cookieParser = require("cookie-parser");
+app.use(cors({
+    origin: [
+        "http://localhost:3000",
+    ],
+    credentials: true,
+}));
 
-require("dotenv").config();
+app.use(cookieParser());
+
+app.use(express.json());
 // =====================
 // SERVER LISTEN (আগে সার্ভার রান হবে)
 // =====================
