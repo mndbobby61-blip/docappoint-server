@@ -55,6 +55,44 @@ const Booking = mongoose.model("Booking", bookingSchema);
 // ROUTES
 // =====================
 
+// =====================
+// JWT ROUTE
+// =====================
+
+app.post("/jwt", async (req, res) => {
+
+    const user = req.body;
+
+    const token = jwt.sign(
+
+        user,
+
+        process.env.JWT_SECRET,
+
+        {
+            expiresIn: "7d",
+        }
+
+    );
+
+    res.cookie("token", token, {
+
+        httpOnly: true,
+
+        secure: false,
+
+        sameSite: "lax",
+
+    });
+
+    res.send({
+
+        success: true,
+
+    });
+
+});
+
 // GET ALL BOOKINGS
 app.get("/api/bookings", async (req, res) => {
   try {
