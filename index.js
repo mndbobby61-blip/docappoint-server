@@ -4,28 +4,29 @@ const mongoose = require("mongoose");
 require("dotenv").config();
 
 const app = express();
-const PORT = process.env.PORT || 8080;
 
 // =====================
 // MIDDLEWARES
 // =====================
-app.use(cors());
 app.use(express.json());
 
-// =====================
-// SERVER LISTEN (আগে সার্ভার রান হবে)
-// =====================
-module.exports = app;
+app.use(cors({
+  origin: [
+    "http://localhost:3000",
+    "https://your-frontend.vercel.app"
+  ],
+  credentials: true
+}));
 
 // =====================
-// MongoDB CONNECT 
+// MONGODB
 // =====================
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log("✅ MongoDB Connected Successfully"))
-  .catch((err) => console.error("❌ MongoDB Connection Error:", err));
+  .then(() => console.log("✅ MongoDB Connected"))
+  .catch(err => console.log(err));
 
 // =====================
-// BOOKING MODEL
+// MODEL
 // =====================
 const bookingSchema = new mongoose.Schema({
   userEmail: String,
@@ -43,51 +44,29 @@ const Booking = mongoose.model("Booking", bookingSchema);
 // ROUTES
 // =====================
 
-// GET ALL BOOKINGS
 app.get("/api/bookings", async (req, res) => {
-  try {
-    const data = await Booking.find();
-    res.send(data);
-  } catch (error) {
-    res.status(500).send({ error: "Failed to fetch bookings" });
-  }
+  const data = await Booking.find();
+  res.json(data);
 });
 
-// POST BOOKING
 app.post("/api/bookings", async (req, res) => {
-  try {
-    console.log("🔥 RECEIVED:", req.body);
-    const booking = new Booking(req.body);
-    const result = await booking.save();
-    console.log("✅ SAVED:", result);
-    res.json(result);
-  } catch (error) {
-    res.status(500).send({ error: "Failed to save booking" });
-  }
+  const booking = new Booking(req.body);
+  const result = await booking.save();
+  res.json(result);
 });
 
-// DELETE BOOKING
 app.delete("/api/bookings/:id", async (req, res) => {
-  try {
-    const id = req.params.id;
-    const result = await Booking.deleteOne({ _id: id });
-    res.send(result);
-  } catch (error) {
-    res.status(500).send({ error: "Failed to delete booking" });
-  }
+  await Booking.deleteOne({ _id: req.params.id });
+  res.json({ success: true });
 });
-
 
 app.put("/api/bookings/:id", async (req, res) => {
-    try {
-        const updated = await Booking.findByIdAndUpdate(
-            req.params.id,
-            req.body,
-            { new: true }
-        );
-
-        res.json(updated);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
+  const updated = await Booking.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    { new: true }
+  );
+  res.json(updated);
 });
+
+module.exports = app;
