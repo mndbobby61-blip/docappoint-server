@@ -1,9 +1,6 @@
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-const jwt = require("jsonwebtoken");
-const cookieParser = require("cookie-parser");
-
 require("dotenv").config();
 
 const app = express();
@@ -12,16 +9,9 @@ const PORT = process.env.PORT || 8080;
 // =====================
 // MIDDLEWARES
 // =====================
-app.use(cors({
-    origin: [
-        "http://localhost:3000",
-    ],
-    credentials: true,
-}));
-
-app.use(cookieParser());
-
+app.use(cors());
 app.use(express.json());
+
 // =====================
 // SERVER LISTEN (আগে সার্ভার রান হবে)
 // =====================
@@ -55,127 +45,14 @@ const Booking = mongoose.model("Booking", bookingSchema);
 // ROUTES
 // =====================
 
-// =====================
-// JWT ROUTE
-// =====================
-
-app.post("/jwt", async (req, res) => {
-
-    const user = req.body;
-
-    const token = jwt.sign(
-
-        user,
-
-        process.env.JWT_SECRET,
-
-        {
-            expiresIn: "7d",
-        }
-
-    );
-
-    res.cookie("token", token, {
-
-        httpOnly: true,
-
-        secure: false,
-
-        sameSite: "lax",
-
-    });
-
-    res.send({
-
-        success: true,
-
-    });
-
-});
-
-// =====================
-// VERIFY TOKEN
-// =====================
-
-const verifyToken = (req, res, next) => {
-
-    const token = req.cookies.token;
-
-    if (!token) {
-
-        return res.status(401).send({
-
-            message: "Unauthorized access",
-
-        });
-
-    }
-
-    jwt.verify(
-
-        token,
-
-        process.env.JWT_SECRET,
-
-        (err, decoded) => {
-
-            if (err) {
-
-                return res.status(401).send({
-
-                    message: "Unauthorized access",
-
-                });
-
-            }
-
-            req.decoded = decoded;
-
-            next();
-
-        }
-
-    );
-
-};
-
 // GET ALL BOOKINGS
-app.get("/api/bookings", verifyToken, async (req, res) => {
-
-    try {
-
-        const email = req.query.email;
-
-        // SECURITY CHECK
-
-        if (email !== req.decoded.email) {
-
-            return res.status(403).send({
-
-                message: "Forbidden access",
-
-            });
-
-        }
-
-        const data = await Booking.find({
-
-            userEmail: email,
-
-        });
-
-        res.send(data);
-
-    } catch (error) {
-
-        res.status(500).send({
-
-            error: "Failed to fetch bookings",
-
-        });
-
-    }
-
+app.get("/api/bookings", async (req, res) => {
+  try {
+    const data = await Booking.find();
+    res.send(data);
+  } catch (error) {
+    res.status(500).send({ error: "Failed to fetch bookings" });
+  }
 });
 
 // POST BOOKING
