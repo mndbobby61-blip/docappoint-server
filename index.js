@@ -15,9 +15,7 @@ app.use(express.json());
 // =====================
 // SERVER LISTEN (আগে সার্ভার রান হবে)
 // =====================
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+module.exports = app;
 
 // =====================
 // MongoDB CONNECT 
