@@ -141,12 +141,41 @@ const verifyToken = (req, res, next) => {
 
 // GET ALL BOOKINGS
 app.get("/api/bookings", verifyToken, async (req, res) => {
-  try {
-    const data = await Booking.find();
-    res.send(data);
-  } catch (error) {
-    res.status(500).send({ error: "Failed to fetch bookings" });
-  }
+
+    try {
+
+        const email = req.query.email;
+
+        // SECURITY CHECK
+
+        if (email !== req.decoded.email) {
+
+            return res.status(403).send({
+
+                message: "Forbidden access",
+
+            });
+
+        }
+
+        const data = await Booking.find({
+
+            userEmail: email,
+
+        });
+
+        res.send(data);
+
+    } catch (error) {
+
+        res.status(500).send({
+
+            error: "Failed to fetch bookings",
+
+        });
+
+    }
+
 });
 
 // POST BOOKING
