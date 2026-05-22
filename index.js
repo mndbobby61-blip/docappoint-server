@@ -1,14 +1,9 @@
 const express = require("express");
 const cors = require("cors");
-const mongoose = require("mongoose");
+const { MongoClient, ObjectId } = require("mongodb");
 require("dotenv").config();
 
 const app = express();
-
-// =====================
-// MIDDLEWARES
-// =====================
-app.use(express.json());
 
 app.use(cors({
   origin: [
@@ -18,55 +13,65 @@ app.use(cors({
   credentials: true
 }));
 
-// =====================
-// MONGODB
-// =====================
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log("✅ MongoDB Connected"))
-  .catch(err => console.log(err));
+app.use(express.json());
 
-// =====================
-// MODEL
-// =====================
-const bookingSchema = new mongoose.Schema({
-  userEmail: String,
-  doctorName: String,
-  patientName: String,
-  gender: String,
-  phone: String,
-  appointmentDate: String,
-  appointmentTime: String,
-});
+// MongoDB setup
+const client = new MongoClient(process.env.MONGODB_URI);
 
-const Booking = mongoose.model("Booking", bookingSchema);
+let bookingCollection;
+
+// connect DB
+async function connectDB() {
+  try {
+    await client.connect();
+    const db = client.db("docappoint");
+    bookingCollection = db.collection("bookings");
+    console.log("✅ MongoDB Connected");
+  } catch (err) {
+    console.log("DB Error:", err);
+  }
+}
+
+connectDB();
 
 // =====================
 // ROUTES
 // =====================
 
+// GET all
 app.get("/api/bookings", async (req, res) => {
-  const data = await Booking.find();
-  res.json(data);
+  const data = await bookingCollection.find().toArray();
+  res.send(data);
 });
 
+// POST
 app.post("/api/bookings", async (req, res) => {
-  const booking = new Booking(req.body);
-  const result = await booking.save();
-  res.json(result);
+  const result = await bookingCollection.insertOne(req.body);
+  res.send(result);
 });
 
+// DELETE
 app.delete("/api/bookings/:id", async (req, res) => {
-  await Booking.deleteOne({ _id: req.params.id });
-  res.json({ success: true });
+  const id = req.params.id;
+
+  const result = await bookingCollection.deleteOne({
+    _id: new ObjectId(id),
+  });
+
+  res.send(result);
 });
 
+// UPDATE
 app.put("/api/bookings/:id", async (req, res) => {
-  const updated = await Booking.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    { new: true }
+  const id = req.params.id;
+
+  const result = await bookingCollection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: req.body }
   );
-  res.json(updated);
+
+  res.send(result);
 });
 
+// IMPORTANT FOR VERCEL
 module.exports = app;
